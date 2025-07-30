@@ -1,1 +1,0 @@
-# Safe-Trade-MSU
