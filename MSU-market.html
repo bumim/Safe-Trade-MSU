@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ตลาดมือสองนิสิต มมส</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun&display=swap');
+  body {
+    font-family: 'Sarabun', sans-serif;
+    margin:0; padding:0; background:#f5f5f5; color:#333;
+  }
+  header {
+    background:#FFC107; color:#333; padding:1rem;
+    text-align:center; font-size:1.5rem; font-weight:bold;
+  }
+  main {
+    max-width:900px; margin:1rem auto; padding:1rem;
+    background:#fff; box-shadow:0 0 10px rgba(0,0,0,0.1);
+    border-radius:8px;
+  }
+  #loginSection, #marketSection {
+    display:none;
+  }
+  .input-group {
+    margin-bottom:0.8rem;
+  }
+  label {
+    display:block; margin-bottom:0.3rem; font-weight:600;
+  }
+  input[type=text], input[type=password], input[type=tel], select, textarea {
+    width:100%; padding:0.5rem; font-size:1rem; border:1px solid #ccc; border-radius:4px;
+    box-sizing: border-box;
+  }
+  button {
+    background:#FFC107; border:none; padding:0.6rem 1.2rem; cursor:pointer; border-radius:4px;
+    font-weight:600; transition: background 0.3s;
+  }
+  button:hover:not(:disabled) {
+    background:#e6ac00;
+  }
+  button:disabled {
+    opacity:0.5; cursor:not-allowed;
+  }
+  .link-toggle {
+    color:#0288d1; cursor:pointer; text-decoration:underline; margin-left:0.3rem;
+    font-size:0.9rem;
+  }
+  .category-card {
+    display:inline-block; padding:0.5rem 1rem; margin:0.3rem;
+    border:1px solid #ccc; border-radius:20px; cursor:pointer;
+    user-select:none;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .category-card.active {
+    background:#FFC107; color:#333; border-color:#e6ac00;
+    font-weight:700;
+  }
+  .post-card {
+    border:1px solid #ddd; border-radius:8px; margin-bottom:1rem;
+    display:flex; flex-wrap:wrap; background:#fff;
+  }
+  .post-card img {
+    width:160px; height:120px; object-fit:cover; border-radius:8px 0 0 8px;
+  }
+  .post-info {
+    flex:1; padding:0.8rem; position:relative;
+  }
+  .post-title {
+    font-weight:700; font-size:1.2rem; margin-bottom:0.3rem;
+  }
+  .post-category, .post-description, .post-contact, .post-seller {
+    font-size:0.9rem; margin-bottom:0.3rem;
+  }
+  .post-buttons {
+    margin-top:0.5rem;
+  }
+  .post-buttons button {
+    margin-right:0.5rem; margin-bottom:0.3rem;
+  }
+  .sold-badge {
+    position:absolute; top:8px; left:8px;
+    background:rgba(255,193,7,0.85); color:#333; padding:0.2rem 0.5rem; font-weight:700;
+    border-radius:4px; font-size:0.9rem;
+    user-select:none;
+  }
+  #postFormOverlay, #commentsModal, #chatModal {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center;
+    z-index:1000;
+  }
+  .modal-content {
+    background:#fff; border-radius:8px; max-width:480px; width:90%; max-height:90vh;
+    overflow-y:auto; padding:1rem; position:relative;
+  }
+  .modal-header {
+    font-weight:700; font-size:1.2rem; margin-bottom:1rem;
+  }
+  .close-btn {
+    position:absolute; top:8px; right:12px; font-size:1.5rem; cursor:pointer; user-select:none;
+    color:#999;
+  }
+  .close-btn:hover {
+    color:#333;
+  }
+  #previewImage {
+    max-width:100%; max-height:200px; display:block; margin:0.5rem 0;
+    border-radius:6px;
+  }
+  .comment-item {
+    border-bottom:1px solid #ddd; padding:0.3rem 0;
+  }
+  .comment-author {
+    font-weight:700; font-size:0.9rem;
+  }
+  .chat-message {
+    padding:0.4rem 0.6rem; margin-bottom:0.4rem; border-radius:10px; max-width:75%;
+    word-wrap:break-word;
+  }
+  .chat-message.mine {
+    background:#ffc107cc; align-self:flex-end;
+  }
+  .chat-message.other {
+    background:#ddd; align-self:flex-start;
+  }
+  #chatMessages {
+    display:flex; flex-direction:column; max-height:300px; overflow-y:auto;
+    padding:0.5rem; border:1px solid #ccc; border-radius:6px; margin-bottom:0.5rem;
+  }
+  #chatUsers button {
+    margin:0.2rem; padding:0.3rem 0.8rem; border-radius:20px; border:none;
+    background:#eee; cursor:pointer;
+  }
+  #chatUsers button:hover {
+    background:#ffc107;
+    color:#333;
+  }
+</style>
+</head>
+<body>
+
+<header>ตลาดมือสองนิสิต มมส</header>
+
+<main>
+  <!-- Login/Register Section -->
+  <section id="loginSection">
+    <h2>เข้าสู่ระบบ</h2>
+    <form id="loginForm">
+      <div class="input-group">
+        <label for="loginId">รหัสนิสิต (11 หลัก)</label>
+        <input type="text" id="loginId" maxlength="11" required pattern="\d{11}" />
+      </div>
+      <div class="input-group">
+        <label for="loginPass">รหัสผ่าน</label>
+        <input type="password" id="loginPass" required minlength="4" />
+      </div>
+      <button type="button" id="btnLogin">เข้าสู่ระบบ</button>
+      <p>ยังไม่สมัคร? <span class="link-toggle" id="toggleLogin">สมัครสมาชิก</span></p>
+    </form>
+
+    <form id="registerForm" style="display:none;">
+      <h2>สมัครสมาชิก</h2>
+      <div class="input-group">
+        <label for="regId">รหัสนิสิต (11 หลัก)</label>
+        <input type="text" id="regId" maxlength="11" required pattern="\d{11}" />
+      </div>
+      <div class="input-group">
+        <label for="regPass">รหัสผ่าน (อย่างน้อย 4 ตัวอักษร)</label>
+        <input type="password" id="regPass" required minlength="4" />
+      </div>
+      <div class="input-group">
+        <label for="regPhone">เบอร์โทรศัพท์ (9-10 หลัก)</label>
+        <input type="tel" id="regPhone" required pattern="\d{9,10}" />
+      </div>
+      <button type="button" id="btnRegister">สมัครสมาชิก</button>
+      <p>มีบัญชีแล้ว? <span class="link-toggle" id="toggleLogin">เข้าสู่ระบบ</span></p>
+    </form>
+  </section>
+
+  <!-- Main Market Section -->
+  <section id="marketSection">
+    <div style="text-align:right; margin-bottom:1rem;">
+      สวัสดี: <span id="currentUser" style="font-weight:700;"></span>
+      <button id="btnLogout" style="margin-left:1rem;">ออกจากระบบ</button>
+    </div>
+
+    <div>
+      <strong>หมวดหมู่:</strong>
+      <div id="categories" style="margin:0.5rem 0;"></div>
+    </div>
+
+    <div style="text-align:right; margin-bottom:1rem;">
+      <button id="btnAddPost">โพสต์สินค้าใหม่</button>
+    </div>
+
+    <div id="posts"></div>
+  </section>
+</main>
+
+<!-- Post Form Modal -->
+<div id="postFormOverlay">
+  <div class="modal-content">
+    <div class="modal-header" id="postFormTitle">โพสต์สินค้าใหม่</div>
+    <span class="close-btn" id="closePostFormBtn" title="ปิด">×</span>
+    <form id="postForm">
+      <div class="input-group">
+        <label for="postTitle">ชื่อสินค้า</label>
+        <input type="text" id="postTitle" required />
+      </div>
+      <div class="input-group">
+        <label for="postDescription">รายละเอียด</label>
+        <textarea id="postDescription" rows="3"></textarea>
+      </div>
+      <div class="input-group">
+        <label for="postCategory">หมวดหมู่</label>
+        <select id="postCategory" required>
+          <option value="" disabled selected>เลือกหมวดหมู่</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label for="postContact">ช่องทางติดต่อ</label>
+        <input type="text" id="postContact" required />
+      </div>
+      <div class="input-group">
+        <label for="postImage">รูปภาพสินค้า (jpg/png/gif)</label>
+        <input type="file" id="postImage" accept="image/*" />
+        <img id="previewImage" style="display:none;" alt="Preview" />
+      </div>
+      <button type="submit">บันทึก</button>
+    </form>
+  </div>
+</div>
+
+<!-- Comments Modal -->
+<div id="commentsModal">
+  <div class="modal-content">
+    <div class="modal-header">คอมเมนต์</div>
+    <span class="close-btn" id="closeCommentsBtn" title="ปิด">×</span>
+    <div id="commentsList" style="max-height:300px; overflow-y:auto; margin-bottom:0.5rem;"></div>
+    <textarea id="commentInput" rows="3" placeholder="พิมพ์คอมเมนต์ที่นี่..."></textarea>
+    <button id="btnSendComment" style="margin-top:0.5rem;">ส่งคอมเมนต์</button>
+  </div>
+</div>
+
+<!-- Chat Modal -->
+<div id="chatModal">
+  <div class="modal-content" style="display:flex; flex-direction:column;">
+    <div class="modal-header" id="chatWithName">แชทกับ: </div>
+    <span class="close-btn" id="closeChatBtn" title="ปิด">×</span>
+    <div id="chatMessages"></div>
+    <textarea id="chatInput" rows="2" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
+    <button id="btnSendChat" style="margin-top:0.3rem;">ส่งข้อความ</button>
+    <div style="margin-top:1rem;">
+      <strong>รายชื่อผู้ใช้สำหรับแชท:</strong>
+      <div id="chatUsers"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // Categories updated per request
+  const categories = [
+    { id: 'dormstuff', name: 'ของใช้ในหอพัก', icon: '🏠' },
+    { id: 'study', name: 'อุปกรณ์การเรียน', icon: '📚' },
+    { id: 'clothes', name: 'เสื้อผ้า', icon: '👕' },
+    { id: 'others', name: 'อื่นๆ', icon: '🛒' }
+  ];
+
+  // DOM Elements
+  const loginSection = document.getElementById('loginSection');
+  const marketSection = document.getElementById('marketSection');
+  const currentUserSpan = document.getElementById('currentUser');
+  const btnLogout = document.getElementById('btnLogout');
+  const btnAddPost = document.getElementById('btnAddPost');
+  const postsContainer = document.getElementById('posts');
+  const categoriesContainer = document.getElementById('categories');
+  const postFormOverlay = document.getElementById('postFormOverlay');
+  const postForm = document.getElementById('postForm');
+  const postFormTitle = document.getElementById('postFormTitle');
+  const closePostFormBtn = document.getElementById('closePostFormBtn');
+  const postTitleInput = document.getElementById('postTitle');
+  const postDescriptionInput = document.getElementById('postDescription');
+  const postCategorySelect = document.getElementById('postCategory');
+  const postContactInput = document.getElementById('postContact');
+  const postImageInput = document.getElementById('postImage');
+  const previewImage = document.getElementById('previewImage');
+
+  // Login/Register Elements
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const toggleLoginSpans = document.querySelectorAll('#toggleLogin');
+  const loginIdInput = document.getElementById('loginId');
+  const loginPassInput = document.getElementById('loginPass');
+  const btnLogin = document.getElementById('btnLogin');
+  const regIdInput = document.getElementById('regId');
+  const regPassInput = document.getElementById('regPass');
+  const regPhoneInput = document.getElementById('regPhone');
+  const btnRegister = document.getElementById('btnRegister');
+
+  // Comments modal
+  const commentsModal = document.getElementById('commentsModal');
+  const commentsList = document.getElementById('commentsList');
+  const commentInput = document.getElementById('commentInput');
+  const btnSendComment = document.getElementById('btnSendComment');
+  const closeCommentsBtn = document.getElementById('closeCommentsBtn');
+
+  // Chat modal
+  const chatModal = document.getElementById('chatModal');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatInput = document.getElementById('chatInput');
+  const btnSendChat = document.getElementById('btnSendChat');
+  const closeChatBtn = document.getElementById('closeChatBtn');
+  const chatWithName = document.getElementById('chatWithName');
+  const chatUsers = document.getElementById('chatUsers');
+
+  // Data keys
+  const LS_USERS = 'mmsu_market_users';
+  const LS_POSTS = 'mmsu_market_posts';
+  const LS_COMMENTS = 'mmsu_market_comments';
+  const LS_CHATS = 'mmsu_market_chats';
+  const LS_CURRENT_USER = 'mmsu_market_currentUser';
+
+  // State
+  let users = [];
+  let posts = [];
+  let comments = [];
+  let chats = {};
+  let currentUser = null;
+  let activePostForComments = null;
+  let activeChatUserId = null;
+  let editingPostId = null;
+  let selectedCategory = null;
+
+  function sanitize(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  function formatDate(timestamp) {
+    const d = new Date(timestamp);
+    return d.toLocaleString('th-TH', { hour12:false });
+  }
+
+  // Load/save data
+  function loadData() {
+    users = JSON.parse(localStorage.getItem(LS_USERS)) || [];
+    posts = JSON.parse(localStorage.getItem(LS_POSTS)) || [];
+    comments = JSON.parse(localStorage.getItem(LS_COMMENTS)) || [];
+    chats = JSON.parse(localStorage.getItem(LS_CHATS)) || {};
+    const savedUser = localStorage.getItem(LS_CURRENT_USER);
+    if(savedUser) {
+      currentUser = JSON.parse(savedUser);
+    }
+  }
+  function saveUsers() { localStorage.setItem(LS_USERS, JSON.stringify(users)); }
+  function savePosts() { localStorage.setItem(LS_POSTS, JSON.stringify(posts)); }
+  function saveComments() { localStorage.setItem(LS_COMMENTS, JSON.stringify(comments)); }
+  function saveChats() { localStorage.setItem(LS_CHATS, JSON.stringify(chats)); }
+  function saveCurrentUser() {
+    if(currentUser) localStorage.setItem(LS_CURRENT_USER, JSON.stringify(currentUser));
+    else localStorage.removeItem(LS_CURRENT_USER);
+  }
+
+  // Login/Register toggle
+  toggleLoginSpans.forEach(span => {
+    span.onclick = () => {
+      if(loginForm.style.display !== 'none') {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+      } else {
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+      }
+      clearLoginInputs();
+      clearRegisterInputs();
+    };
+  });
+
+  function clearLoginInputs() {
+    loginIdInput.value = '';
+    loginPassInput.value = '';
+  }
+  function clearRegisterInputs() {
+    regIdInput.value = '';
+    regPassInput.value = '';
+    regPhoneInput.value = '';
+  }
+
+  function isValidStudentId(id) {
+    return /^\d{11}$/.test(id);
+  }
+  function isValidPassword(pass) {
+    return pass.length >= 4;
+  }
+  function isValidPhone(phone) {
+    return /^\d{9,10}$/.test(phone);
+  }
+
+  // Register
+  btnRegister.onclick = () => {
+    const id = regIdInput.value.trim();
+    const pass = regPassInput.value;
+    const phone = regPhoneInput.value.trim();
+
+    if(!isValidStudentId(id)) return alert('รหัสนิสิตต้องมี 11 หลักเท่านั้น');
+    if(!isValidPassword(pass)) return alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัว');
+    if(!isValidPhone(phone)) return alert('เบอร์โทรศัพท์ไม่ถูกต้อง');
+
+    if(users.find(u => u.id === id)) return alert('รหัสนิสิตนี้ถูกใช้งานแล้ว');
+
+    users.push({id, password: pass, phone});
+    saveUsers();
+    alert('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');
+    toggleLoginSpans[0].click();
+  };
+
+  // Login
+  btnLogin.onclick = () => {
+    const id = loginIdInput.value.trim();
+    const pass = loginPassInput.value;
+    if(!isValidStudentId(id)) return alert('รหัสนิสิตต้องมี 11 หลักเท่านั้น');
+    if(!isValidPassword(pass)) return alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัว');
+
+    const user = users.find(u => u.id === id && u.password === pass);
+    if(!user) return alert('รหัสนิสิตหรือรหัสผ่านไม่ถูกต้อง');
+
+    currentUser = { id: user.id };
+    saveCurrentUser();
+    clearLoginInputs();
+    showMarket();
+  };
+
+  // Logout
+  btnLogout.onclick = () => {
+    if(confirm('ต้องการออกจากระบบ?')) {
+      currentUser = null;
+      saveCurrentUser();
+      showLogin();
+    }
+  };
+
+  // Show login/market
+  function showLogin() {
+    loginSection.style.display = 'block';
+    marketSection.style.display = 'none';
+  }
+  function showMarket() {
+    loginSection.style.display = 'none';
+    marketSection.style.display = 'block';
+    currentUserSpan.textContent = currentUser.id;
+    populateCategorySelect();
+    renderCategories();
+    renderPosts();
+    renderChatUserList();
+  }
+
+  // Populate category select dropdown & render categories
+  function populateCategorySelect() {
+    postCategorySelect.innerHTML = '<option value="" disabled selected>เลือกหมวดหมู่</option>';
+    categories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.icon + ' ' + c.name;
+      postCategorySelect.appendChild(opt);
+    });
+  }
+  function renderCategories() {
+    categoriesContainer.innerHTML = '';
+    categories.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'category-card' + (selectedCategory === c.id ? ' active' : '');
+      div.textContent = c.icon + ' ' + c.name;
+      div.onclick = () => {
+        if(selectedCategory === c.id) selectedCategory = null;
+        else selectedCategory = c.id;
+        renderCategories();
+        renderPosts();
+      };
+      categoriesContainer.appendChild(div);
+    });
+  }
+
+  // Render posts filtered by category
+  function renderPosts() {
+    postsContainer.innerHTML = '';
+    let filtered = posts;
+    if(selectedCategory) {
+      filtered = posts.filter(p => p.category === selectedCategory);
+    }
+    if(filtered.length === 0) {
+      postsContainer.textContent = 'ไม่มีโพสต์ในหมวดนี้';
+      return;
+    }
+    filtered.forEach(post => {
+      const card = document.createElement('div');
+      card.className = 'post-card';
+
+      // Image
+      const img = document.createElement('img');
+      img.src = post.image || 'https://via.placeholder.com/160x120?text=No+Image';
+      img.alt = post.title;
+      card.appendChild(img);
+
+      // Info
+      const info = document.createElement('div');
+      info.className = 'post-info';
+
+      const title = document.createElement('div');
+      title.className = 'post-title';
+      title.innerHTML = sanitize(post.title);
+      info.appendChild(title);
+
+      const cat = categories.find(c => c.id === post.category);
+      const catName = cat ? cat.name : 'ไม่ระบุหมวดหมู่';
+      const categoryDiv = document.createElement('div');
+      categoryDiv.className = 'post-category';
+      categoryDiv.textContent = `หมวดหมู่: ${catName}`;
+      info.appendChild(categoryDiv);
+
+      if(post.description) {
+        const desc = document.createElement('div');
+        desc.className = 'post-description';
+        desc.textContent = post.description;
+        info.appendChild(desc);
+      }
+
+      const contact = document.createElement('div');
+      contact.className = 'post-contact';
+      contact.textContent = `ช่องทางติดต่อ: ${post.contact}`;
+      info.appendChild(contact);
+
+      const seller = document.createElement('div');
+      seller.className = 'post-seller';
+      seller.textContent = `ผู้โพสต์: ${post.sellerId}`;
+      info.appendChild(seller);
+
+      if(post.sold) {
+        const soldBadge = document.createElement('div');
+        soldBadge.className = 'sold-badge';
+        soldBadge.textContent = 'ขายแล้ว';
+        info.appendChild(soldBadge);
+      }
+
+      // Buttons for owner only
+      if(currentUser.id === post.sellerId) {
+        const btnsDiv = document.createElement('div');
+        btnsDiv.className = 'post-buttons';
+
+        const btnEdit = document.createElement('button');
+        btnEdit.textContent = 'แก้ไข';
+        btnEdit.onclick = () => openEditPost(post.id);
+        btnsDiv.appendChild(btnEdit);
+
+        const btnDelete = document.createElement('button');
+        btnDelete.textContent = 'ลบ';
+        btnDelete.onclick = () => {
+          if(confirm('ลบโพสต์นี้?')) {
+            posts = posts.filter(p => p.id !== post.id);
+            savePosts();
+            renderPosts();
+          }
+        };
+        btnsDiv.appendChild(btnDelete);
+
+        const btnSold = document.createElement('button');
+        btnSold.textContent = post.sold ? 'ยกเลิกขายแล้ว' : 'ขายแล้ว';
+        btnSold.onclick = () => {
+          post.sold = !post.sold;
+          savePosts();
+          renderPosts();
+        };
+        btnsDiv.appendChild(btnSold);
+
+        info.appendChild(btnsDiv);
+      }
+
+      // Comment button
+      const btnComment = document.createElement('button');
+      btnComment.textContent = 'คอมเมนต์';
+      btnComment.onclick = () => openComments(post.id);
+      info.appendChild(btnComment);
+
+      // Chat button to chat with seller
+      if(currentUser.id !== post.sellerId) {
+        const btnChat = document.createElement('button');
+        btnChat.textContent = 'แชทกับผู้ขาย';
+        btnChat.onclick = () => openChatModal(post.sellerId);
+        info.appendChild(btnChat);
+      }
+
+      card.appendChild(info);
+      postsContainer.appendChild(card);
+    });
+  }
+
+  // Open new post form
+  btnAddPost.onclick = () => {
+    editingPostId = null;
+    openPostForm();
+  };
+
+  // Open post form (new/edit)
+  function openPostForm() {
+    postFormTitle.textContent = editingPostId ? 'แก้ไขโพสต์สินค้า' : 'โพสต์สินค้าใหม่';
+    postTitleInput.value = '';
+    postDescriptionInput.value = '';
+    postCategorySelect.value = '';
+    postContactInput.value = '';
+    previewImage.style.display = 'none';
+    previewImage.src = '';
+    postImageInput.value = '';
+    if(editingPostId) {
+      const p = posts.find(p => p.id === editingPostId);
+      if(p) {
+        postTitleInput.value = p.title;
+        postDescriptionInput.value = p.description || '';
+        postCategorySelect.value = p.category;
+        postContactInput.value = p.contact;
+        if(p.image) {
+          previewImage.src = p.image;
+          previewImage.style.display = 'block';
+        }
+      }
+    }
+    postFormOverlay.style.display = 'flex';
+  }
+  closePostFormBtn.onclick = () => {
+    postFormOverlay.style.display = 'none';
+  };
+
+  // Image preview on file select
+  postImageInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) {
+      previewImage.style.display = 'none';
+      previewImage.src = '';
+      return;
+    }
+    if(!file.type.startsWith('image/')) {
+      alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      postImageInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      previewImage.src = evt.target.result;
+      previewImage.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Save post (new/edit)
+  postForm.onsubmit = e => {
+    e.preventDefault();
+    const title = postTitleInput.value.trim();
+    const description = postDescriptionInput.value.trim();
+    const category = postCategorySelect.value;
+    const contact = postContactInput.value.trim();
+
+    if(!title) return alert('กรุณากรอกชื่อสินค้า');
+    if(!category) return alert('กรุณาเลือกหมวดหมู่');
+    if(!contact) return alert('กรุณากรอกช่องทางติดต่อ');
+
+    // Handle image data
+    if(editingPostId) {
+      // Edit post
+      const post = posts.find(p => p.id === editingPostId);
+      if(!post) return alert('ไม่พบโพสต์ที่จะแก้ไข');
+      post.title = title;
+      post.description = description;
+      post.category = category;
+      post.contact = contact;
+
+      // If new image selected, update it
+      if(postImageInput.files.length > 0) {
+        const file = postImageInput.files[0];
+        if(file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            post.image = evt.target.result;
+            savePosts();
+            renderPosts();
+            postFormOverlay.style.display = 'none';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          alert('ไฟล์ภาพไม่ถูกต้อง');
+          return;
+        }
+      } else {
+        // No new image chosen, keep old image
+        savePosts();
+        renderPosts();
+        postFormOverlay.style.display = 'none';
+      }
+    } else {
+      // New post
+      if(postImageInput.files.length === 0) {
+        return alert('กรุณาอัปโหลดรูปภาพสินค้า');
+      }
+      const file = postImageInput.files[0];
+      if(!file.type.startsWith('image/')) {
+        return alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const newPost = {
+          id: Date.now().toString(),
+          title,
+          description,
+          category,
+          contact,
+          sellerId: currentUser.id,
+          sold: false,
+          image: evt.target.result
+        };
+        posts.push(newPost);
+        savePosts();
+        renderPosts();
+        postFormOverlay.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Open edit post
+  function openEditPost(postId) {
+    editingPostId = postId;
+    openPostForm();
+  }
+
+  // Comments functions
+  closeCommentsBtn.onclick = () => {
+    commentsModal.style.display = 'none';
+    activePostForComments = null;
+    commentInput.value = '';
+  };
+  btnSendComment.onclick = () => {
+    if(!activePostForComments) return;
+    const text = commentInput.value.trim();
+    if(!text) return alert('กรุณาพิมพ์คอมเมนต์');
+    comments.push({
+      id: Date.now().toString(),
+      postId: activePostForComments,
+      authorId: currentUser.id,
+      text,
+      timestamp: Date.now()
+    });
+    saveComments();
+    commentInput.value = '';
+    renderComments(activePostForComments);
+  };
+  function openComments(postId) {
+    activePostForComments = postId;
+    renderComments(postId);
+    commentsModal.style.display = 'flex';
+  }
+  function renderComments(postId) {
+    commentsList.innerHTML = '';
+    const postComments = comments.filter(c => c.postId === postId);
+    if(postComments.length === 0) {
+      commentsList.textContent = 'ยังไม่มีคอมเมนต์';
+      return;
+    }
+    postComments.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'comment-item';
+      div.innerHTML = `<div class="comment-author">${c.authorId}</div><div>${sanitize(c.text)}</div><div style="font-size:0.8rem;color:#666;">${formatDate(c.timestamp)}</div>`;
+      commentsList.appendChild(div);
+    });
+    commentsList.scrollTop = commentsList.scrollHeight;
+  }
+
+  // Chat functions
+  closeChatBtn.onclick = () => {
+    activeChatUserId = null;
+    chatModal.style.display = 'none';
+    chatInput.value = '';
+  };
+  btnSendChat.onclick = () => {
+    const text = chatInput.value.trim();
+    if(!text) return alert('กรุณาพิมพ์ข้อความก่อนส่ง');
+    if(!activeChatUserId) return;
+
+    const chatKey = getChatKey(currentUser.id, activeChatUserId);
+    if(!chats[chatKey]) chats[chatKey] = [];
+    chats[chatKey].push({
+      from: currentUser.id,
+      to: activeChatUserId,
+      text,
+      timestamp: Date.now()
+    });
+    saveChats();
+    chatInput.value = '';
+    renderChatMessages();
+  };
+  chatInput.addEventListener('keypress', e => {
+    if(e.key === 'Enter') {
+      e.preventDefault();
+      btnSendChat.click();
+    }
+  });
+  function getChatKey(userA, userB) {
+    return [userA, userB].sort().join('-');
+  }
+  function openChatModal(chatUserId) {
+    if(chatUserId === currentUser.id) return alert('ไม่สามารถแชทกับตัวเองได้');
+    activeChatUserId = chatUserId;
+    chatModal.style.display = 'flex';
+    const user = users.find(u => u.id === chatUserId);
+    chatWithName.textContent = `แชทกับ: ${user ? user.id : 'ไม่ทราบผู้ใช้'}`;
+    renderChatMessages();
+  }
+  function renderChatMessages() {
+    if(!activeChatUserId) return;
+    const chatKey = getChatKey(currentUser.id, activeChatUserId);
+    const chatList = chats[chatKey] || [];
+    chatMessages.innerHTML = '';
+    chatList.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = 'chat-message ' + (msg.from === currentUser.id ? 'mine' : 'other');
+      div.textContent = `${msg.text} (${formatDate(msg.timestamp)})`;
+      chatMessages.appendChild(div);
+    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  // Render chat user list
+  function renderChatUserList() {
+    chatUsers.innerHTML = '';
+    users.forEach(u => {
+      if(u.id === currentUser.id) return; // ไม่แชทกับตัวเอง
+      const btn = document.createElement('button');
+      btn.textContent = u.id;
+      btn.onclick = () => openChatModal(u.id);
+      chatUsers.appendChild(btn);
+    });
+  }
+
+  // Initialize
+  function init() {
+    loadData();
+    if(currentUser) {
+      showMarket();
+    } else {
+      showLogin();
+    }
+  }
+  init();
+
+})();
+</script>
+
+</body>
+</html>
